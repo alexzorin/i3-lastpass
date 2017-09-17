@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+LPASS_ITEMS=$(lpass ls --color=never --sync=no --format="%aN (%au) | %ai")
+LPASS_SELECTION=$(printf "${LPASS_ITEMS}" | dmenu -p "LastPass" -i -l 3)
+LPASS_SELECTION_ID=$(echo "${LPASS_SELECTION}" | sed 's/.*| //' | xargs)
+
+lpass show --sync=no --password "${LPASS_SELECTION_ID}" | xsel --secondary -i
