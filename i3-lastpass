@@ -2,7 +2,21 @@
 
 set -euf -o pipefail
 
-LPASS_ITEMS=$(lpass ls --color=never --sync=no --format="%aN (%au) | %ai")
+LPASS_SESSION=$(lpass status --color=never || true)
+if [[ "${LPASS_SESSION}" == *"Not logged in."* ]]
+then
+  printf "You need to login to LastPass first: (lpass login --trust <username>)\n" | dmenu -p "LastPass"
+  exit 1
+fi
+
+# Try fetch the list without syncing, but sync if lpass-cli doesnt have the blob cached
+LPASS_ITEMS=$(lpass ls --sync=no --color=never --format="%aN (%au) | %ai" || printf 'no-sync')
+if [[ "${LPASS_ITEMS}" == "no-sync" ]]
+then
+  LPASS_ITEMS=$(lpass ls --sync=auto --color=never --format="%aN (%au) | %ai")
+fi
+
+
 LPASS_SELECTION=$(printf "${LPASS_ITEMS}" | dmenu -p "LastPass" -i -l 3)
 LPASS_SELECTION_ID=$(echo "${LPASS_SELECTION}" | sed 's/.*| //' | xargs)
 
